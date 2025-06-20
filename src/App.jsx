@@ -1,10 +1,11 @@
-
+import React from 'react';
+import List from './components/course/CourseDetails.jsx';
 
 function App() {
  
   return (
     <>
-      <p className="italic">Heloo!</p>
+      <List />
     </>
   )
 }
