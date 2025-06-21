@@ -36,7 +36,7 @@ const CourseApp = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-6xl font-bold text-blue-900">
             Course Management System
           </h1>
         </div>
@@ -54,14 +54,14 @@ const CourseApp = () => {
         )}
 
         {/* Navigation Tabs */}
-        <div className="border-b border-gray-200 mb-6">
+        <div className="border-b-2 border-gray-400 mb-6">
           <nav className="-mb-px flex space-x-8">
             <button
               onClick={() => setActiveTab('courses')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`py-2 px-1 border-b-2 font-medium text-xl ${
                 activeTab === 'courses'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-blue-700 border-b-4 text-blue-600'
+                  : 'border-transparent text-gray-700 hover:text-gray-700 hover:border-gray-400'
               }`}
             >
               Courses
@@ -71,10 +71,10 @@ const CourseApp = () => {
                 setActiveTab('instances');
                 fetchInstances(instanceFilter.year, instanceFilter.semester);
               }}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`py-2 px-1 border-b-2 font-medium text-xl ${
                 activeTab === 'instances'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-blue-700 border-b-4 text-blue-600'
+                  : 'border-transparent text-gray-700 hover:text-gray-500 hover:border-gray-300'
               }`}
             >
               Course Instances
@@ -83,7 +83,7 @@ const CourseApp = () => {
         </div>
 
         {/* Tab Content */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white rounded-lg mb-4 p-4 shadow">
           {activeTab === 'courses' && (
             <Courses 
               setSuccess={setSuccess}

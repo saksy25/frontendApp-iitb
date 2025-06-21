@@ -217,11 +217,11 @@ const CourseInstance = () => {
         </div>
       )}
 
-      <div className="mb-6 flex justify-between items-center">
-        <h2 className="text-2xl font-semibold text-gray-900">Course Instances</h2>
+      <div className="mb-6 flex justify-between px-2 items-center">
+        <h2 className="text-2xl font-semibold text-blue-950">Course Instances</h2>
         <button
           onClick={() => setShowInstanceForm(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+          className="bg-blue-700 text-white text-lg px-4 py-2 rounded-lg hover:bg-blue-800 flex items-center"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Instance
@@ -231,22 +231,22 @@ const CourseInstance = () => {
       {/* Instance Filter */}
       <div className="mb-6 bg-white p-4 rounded-lg shadow flex items-center space-x-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+          <label className="block text-md font-medium text-gray-700 mb-1">Year</label>
           <input
             type="number"
             min="2020"
             max="2030"
             value={instanceFilter.year}
             onChange={(e) => setInstanceFilter(prev => ({ ...prev, year: parseInt(e.target.value) }))}
-            className="border border-gray-300 rounded-md px-3 py-1 text-sm"
+            className="border border-gray-300 rounded-md px-3 py-1 text-md"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+          <label className="block text-md font-medium text-gray-700 mb-1">Semester</label>
           <select
             value={instanceFilter.semester}
             onChange={(e) => setInstanceFilter(prev => ({ ...prev, semester: parseInt(e.target.value) }))}
-            className="border border-gray-300 rounded-md px-3 py-1 text-sm"
+            className="border border-gray-300 rounded-md px-3 py-1 text-md"
           >
             <option value={1}>1</option>
             <option value={2}>2</option>
@@ -254,7 +254,7 @@ const CourseInstance = () => {
         </div>
         <button
           onClick={() => handleFilterChange(instanceFilter)}
-          className="bg-gray-600 text-white px-4 py-1 rounded-md hover:bg-gray-700 text-sm mt-6"
+          className="bg-gray-600 text-white px-4 py-1 rounded-md hover:bg-gray-700 text-md mt-6"
         >
           Filter
         </button>
@@ -270,7 +270,7 @@ const CourseInstance = () => {
         )}
 
         {!loading && instances.length === 0 && (
-          <div className="p-8 text-center text-gray-500">
+          <div className="p-8 text-center text-gray-600">
             No course instances found for {instanceFilter.year} semester {instanceFilter.semester}.
           </div>
         )}
@@ -280,19 +280,19 @@ const CourseInstance = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">
                     Course ID
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">
                     Title
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">
                     Year
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">
                     Semester
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -300,33 +300,33 @@ const CourseInstance = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {instances.map((instance, index) => (
                   <tr key={`${instance.courseId}-${instance.year}-${instance.semester}`} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-md font-medium text-gray-900">
                       {instance.courseId}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-md text-gray-900">
                       {instance.title || 'Course title not found'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-md text-gray-900">
                       {instance.year}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-md text-gray-900">
                       {instance.semester}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-md font-medium">
                       <div className="flex space-x-2">
                         <button
                           onClick={() => viewInstanceDetails(instance.year, instance.semester, instance.courseId)}
                           className="text-blue-600 hover:text-blue-900"
                           title="View details"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-6 h-6" />
                         </button>
                         <button
                           onClick={() => deleteInstance(instance.year, instance.semester, instance.courseId)}
                           className="text-red-600 hover:text-red-900"
                           title="Delete instance"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-6 h-6" />
                         </button>
                       </div>
                     </td>
@@ -340,11 +340,11 @@ const CourseInstance = () => {
 
       {/* Create Instance Modal */}
       {showInstanceForm && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="fixed inset-0 bg-black/40 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Create Course Instance</h3>
+                <h3 className="text-xl font-medium text-gray-950">Create Course Instance</h3>
                 <button
                   onClick={() => setShowInstanceForm(false)}
                   className="text-gray-400 hover:text-gray-600"
@@ -354,7 +354,7 @@ const CourseInstance = () => {
               </div>
               <form onSubmit={createInstance} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-md font-medium text-gray-700 mb-1">
                     Course
                   </label>
                   <select
@@ -372,7 +372,7 @@ const CourseInstance = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-md font-medium text-gray-700 mb-1">
                     Year
                   </label>
                   <input
@@ -386,7 +386,7 @@ const CourseInstance = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-md font-medium text-gray-700 mb-1">
                     Semester
                   </label>
                   <select
@@ -410,7 +410,7 @@ const CourseInstance = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                    className="px-4 py-2 bg-blue-700 text-white rounded-md hover:bg-blue-800 disabled:opacity-50"
                   >
                     {loading ? 'Creating...' : 'Create Instance'}
                   </button>
@@ -423,11 +423,11 @@ const CourseInstance = () => {
 
       {/* Instance Details Modal */}
       {selectedInstance && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="fixed inset-0 bg-black/40 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-2/3 max-w-2xl shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Course Instance Details</h3>
+                <h3 className="text-xl font-medium text-gray-950">Course Instance Details</h3>
                 <button
                   onClick={() => setSelectedInstance(null)}
                   className="text-gray-400 hover:text-gray-600"
@@ -437,32 +437,32 @@ const CourseInstance = () => {
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Course ID</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedInstance.courseId}</p>
+                  <label className="block text-md font-medium text-gray-700">Course ID</label>
+                  <p className="mt-1 text-md text-gray-950">{selectedInstance.courseId}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Course Title</label>
-                  <p className="mt-1 text-sm text-gray-900">
+                  <p className="mt-1 text-md text-gray-950">
                     {selectedInstance.title || 'Title not available'}
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Year</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedInstance.year}</p>
+                  <label className="block text-md font-medium text-gray-700">Year</label>
+                  <p className="mt-1 text-md text-gray-950">{selectedInstance.year}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Semester</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedInstance.semester}</p>
+                  <label className="block text-md font-medium text-gray-700">Semester</label>
+                  <p className="mt-1 text-md text-gray-950">{selectedInstance.semester}</p>
                 </div>
                 {selectedInstance.description && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Description</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedInstance.description}</p>
+                    <label className="block text-md font-medium text-gray-700">Description</label>
+                    <p className="mt-1 text-md text-gray-950">{selectedInstance.description}</p>
                   </div>
                 )}
                 {selectedInstance.prerequisites && selectedInstance.prerequisites.length > 0 && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Prerequisites</label>
+                    <label className="block text-md font-medium text-gray-700">Prerequisites</label>
                     <div className="mt-1 flex flex-wrap gap-2">
                       {selectedInstance.prerequisites.map((prereq, index) => (
                         <span

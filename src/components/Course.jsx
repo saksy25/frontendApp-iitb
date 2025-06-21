@@ -8,6 +8,7 @@ const Course = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Course form states
   const [showCourseForm, setShowCourseForm] = useState(false);
@@ -67,6 +68,8 @@ const Course = () => {
         },
         body: JSON.stringify(courseForm),
       });
+      // Debug: Log the response status and data
+    console.log('Response status:', response.status);
 
       if (response.ok) {
         showMessage('Course created successfully!');
@@ -75,6 +78,9 @@ const Course = () => {
         fetchCourses();
       } else {
         const errorData = await response.json();
+        if (response.status === 400 || response.status === 409) {
+          window.alert(`Course with ID "${courseForm.courseId}" already exists`);
+        }
         throw new Error(errorData.message || 'Failed to create course');
       }
     } catch (err) {
@@ -140,6 +146,10 @@ const Course = () => {
     );
   };
 
+  const filteredCourses = courses.filter(course =>
+    searchTerm === '' || course.courseId.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div>
       {/* Success/Error Messages */}
@@ -156,11 +166,22 @@ const Course = () => {
         </div>
       )}
 
-      <div className="mb-6 flex justify-between items-center">
-        <h2 className="text-2xl font-semibold text-gray-900">Courses</h2>
+      <div className="mb-6 flex justify-between px-4 items-center">
+        <h2 className="text-2xl font-semibold text-blue-950">Courses</h2>
+        <div className="px-6 md:min-w-3xl">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search by Course ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full md:w-1/3 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
         <button
           onClick={() => setShowCourseForm(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+          className="bg-blue-700 text-white text-lg px-4 py-2 rounded-lg hover:bg-blue-800 flex items-center"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Course
@@ -176,54 +197,60 @@ const Course = () => {
           </div>
         )}
 
-        {!loading && courses.length === 0 && (
-          <div className="p-8 text-center text-gray-500">
+        {!loading && filteredCourses.length === 0 && searchTerm && (
+          <div className="p-8 text-center text-gray-600">
+            No courses found matching "{searchTerm}".
+          </div>
+        )}
+
+        {!loading && courses.length === 0 && !searchTerm && (
+          <div className="p-8 text-center text-gray-600">
             No courses found. Create your first course to get started.
           </div>
         )}
 
-        {!loading && courses.length > 0 && (
+        {!loading && filteredCourses.length > 0 && (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">
                     Course ID
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">
                     Title
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">
                     Prerequisites
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {courses.map((course) => (
+                {filteredCourses.map((course) => (
                   <tr key={course.courseId} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-md font-medium text-gray-900">
                       {course.courseId}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-md text-gray-900">
                       {course.title}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
+                    <td className="px-6 py-4 text-sm text-gray-600">
                       {course.prerequisites && course.prerequisites.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
                           {course.prerequisites.map((prereq) => (
                             <span
                               key={prereq}
-                              className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
+                              className="inline-block bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded"
                             >
                               {prereq}
                             </span>
                           ))}
                         </div>
                       ) : (
-                        <span className="text-gray-400">None</span>
+                        <span className="text-gray-500">None</span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -233,14 +260,14 @@ const Course = () => {
                           className="text-blue-600 hover:text-blue-900"
                           title="View details"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-6 h-6" />
                         </button>
                         <button
                           onClick={() => deleteCourse(course.courseId)}
                           disabled={isPrerequisiteForOthers(course.courseId)}
                           className={`${
                             isPrerequisiteForOthers(course.courseId)
-                              ? 'text-gray-400 cursor-not-allowed'
+                              ? 'text-gray-500 cursor-not-allowed'
                               : 'text-red-600 hover:text-red-900'
                           }`}
                           title={
@@ -249,7 +276,7 @@ const Course = () => {
                               : 'Delete course'
                           }
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-6 h-6" />
                         </button>
                       </div>
                     </td>
@@ -263,11 +290,11 @@ const Course = () => {
 
       {/* Create Course Modal */}
       {showCourseForm && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="fixed inset-0 bg-black/40 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Create New Course</h3>
+                <h3 className="text-xl font-medium text-blue-950">Create New Course</h3>
                 <button
                   onClick={() => setShowCourseForm(false)}
                   className="text-gray-400 hover:text-gray-600"
@@ -277,7 +304,7 @@ const Course = () => {
               </div>
               <form onSubmit={createCourse} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-md font-medium text-gray-700 mb-1">
                     Course ID
                   </label>
                   <input
@@ -290,7 +317,7 @@ const Course = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-md font-medium text-gray-700 mb-1">
                     Title
                   </label>
                   <input
@@ -303,7 +330,7 @@ const Course = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-md font-medium text-gray-700 mb-1">
                     Description
                   </label>
                   <textarea
@@ -316,7 +343,7 @@ const Course = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-md font-medium text-gray-700 mb-2">
                     Prerequisites
                   </label>
                   <div className="max-h-32 overflow-y-auto border border-gray-300 rounded-md p-2">
@@ -333,7 +360,7 @@ const Course = () => {
                         </label>
                       ))
                     ) : (
-                      <p className="text-sm text-gray-500">No courses available</p>
+                      <p className="text-sm text-gray-600">No courses available</p>
                     )}
                   </div>
                 </div>
@@ -348,7 +375,7 @@ const Course = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                    className="px-4 py-2 bg-blue-700 text-white rounded-md hover:bg-blue-800 disabled:opacity-50"
                   >
                     {loading ? 'Creating...' : 'Create Course'}
                   </button>
@@ -361,11 +388,11 @@ const Course = () => {
 
       {/* Course Details Modal */}
       {selectedCourse && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="fixed inset-0 bg-black/40 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-2/3 max-w-2xl shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Course Details</h3>
+                <h3 className="text-xl font-medium text-gray-950">Course Details</h3>
                 <button
                   onClick={() => setSelectedCourse(null)}
                   className="text-gray-400 hover:text-gray-600"
@@ -375,32 +402,32 @@ const Course = () => {
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Course ID</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedCourse.courseId}</p>
+                  <label className="block text-md font-medium text-gray-700">Course ID</label>
+                  <p className="mt-1 text-md text-gray-950">{selectedCourse.courseId}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Title</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedCourse.title}</p>
+                  <label className="block text-md font-medium text-gray-700">Title</label>
+                  <p className="mt-1 text-md text-gray-950">{selectedCourse.title}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Description</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedCourse.description}</p>
+                  <label className="block text-md font-medium text-gray-700">Description</label>
+                  <p className="mt-1 text-md text-gray-950">{selectedCourse.description}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Prerequisites</label>
+                  <label className="block text-md font-medium text-gray-700">Prerequisites</label>
                   {selectedCourse.prerequisites && selectedCourse.prerequisites.length > 0 ? (
                     <div className="mt-1 flex flex-wrap gap-2">
                       {selectedCourse.prerequisites.map((prereq) => (
                         <span
                           key={prereq}
-                          className="inline-block bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full"
+                          className="inline-block bg-blue-100 text-blue-800 text-md px-3 py-1 rounded-full"
                         >
                           {prereq}
                         </span>
                       ))}
                     </div>
                   ) : (
-                    <p className="mt-1 text-sm text-gray-500">No prerequisites</p>
+                    <p className="mt-1 text-md text-gray-500">No prerequisites</p>
                   )}
                 </div>
               </div>
