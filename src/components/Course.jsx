@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
-import { Plus, Trash2, Eye, X } from 'lucide-react';
-import { createCourse, deleteCourse, getCourseDetails } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import { Plus, Trash2, Eye, Book, AlertCircle, CheckCircle, X } from 'lucide-react';
 
-const Course = ({ courses, loading, onCoursesChange, onMessage, onLoadingChange }) => {
+const API_BASE_URL = 'http://localhost:8080/api';
+
+const Course = () => {
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
   // Course form states
   const [showCourseForm, setShowCourseForm] = useState(false);
   const [courseForm, setCourseForm] = useState({
@@ -15,50 +21,107 @@ const Course = ({ courses, loading, onCoursesChange, onMessage, onLoadingChange 
   // Selected course for details
   const [selectedCourse, setSelectedCourse] = useState(null);
 
-  const handleCreateCourse = async (e) => {
-    e.preventDefault();
-    onLoadingChange(true);
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  const showMessage = (message, type = 'success') => {
+    if (type === 'success') {
+      setSuccess(message);
+      setError('');
+    } else {
+      setError(message);
+      setSuccess('');
+    }
+    setTimeout(() => {
+      setSuccess('');
+      setError('');
+    }, 5000);
+  };
+
+  const fetchCourses = async () => {
+    setLoading(true);
     try {
-      await createCourse(courseForm);
-      onMessage('Course created successfully!');
-      setCourseForm({ title: '', courseId: '', description: '', prerequisites: [] });
-      setShowCourseForm(false);
-      onCoursesChange();
+      const response = await fetch(`${API_BASE_URL}/courses`);
+      if (response.ok) {
+        const data = await response.json();
+        setCourses(data);
+      } else {
+        throw new Error('Failed to fetch courses');
+      }
     } catch (err) {
-      onMessage('Error creating course: ' + err.message, 'error');
+      showMessage('Error fetching courses: ' + err.message, 'error');
     } finally {
-      onLoadingChange(false);
+      setLoading(false);
     }
   };
 
-  const handleDeleteCourse = async (courseId) => {
+  const createCourse = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/courses`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(courseForm),
+      });
+
+      if (response.ok) {
+        showMessage('Course created successfully!');
+        setCourseForm({ title: '', courseId: '', description: '', prerequisites: [] });
+        setShowCourseForm(false);
+        fetchCourses();
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create course');
+      }
+    } catch (err) {
+      showMessage('Error creating course: ' + err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteCourse = async (courseId) => {
     if (!window.confirm('Are you sure you want to delete this course?')) return;
 
-    onLoadingChange(true);
+    setLoading(true);
     try {
-      await deleteCourse(courseId);
-      onMessage('Course deleted successfully!');
-      onCoursesChange();
-    } catch (err) {
-      if (err.message.includes('409')) {
-        onMessage('Cannot delete course: it is a prerequisite for other courses', 'error');
+      const response = await fetch(`${API_BASE_URL}/courses/${courseId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        showMessage('Course deleted successfully!');
+        fetchCourses();
+      } else if (response.status === 409) {
+        showMessage('Cannot delete course: it is a prerequisite for other courses', 'error');
       } else {
-        onMessage('Error deleting course: ' + err.message, 'error');
+        throw new Error('Failed to delete course');
       }
+    } catch (err) {
+      showMessage('Error deleting course: ' + err.message, 'error');
     } finally {
-      onLoadingChange(false);
+      setLoading(false);
     }
   };
 
-  const handleViewCourseDetails = async (courseId) => {
-    onLoadingChange(true);
+  const viewCourseDetails = async (courseId) => {
+    setLoading(true);
     try {
-      const data = await getCourseDetails(courseId);
-      setSelectedCourse(data);
+      const response = await fetch(`${API_BASE_URL}/courses/${courseId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSelectedCourse(data);
+      } else {
+        throw new Error('Failed to fetch course details');
+      }
     } catch (err) {
-      onMessage('Error fetching course details: ' + err.message, 'error');
+      showMessage('Error fetching course details: ' + err.message, 'error');
     } finally {
-      onLoadingChange(false);
+      setLoading(false);
     }
   };
 
@@ -79,6 +142,20 @@ const Course = ({ courses, loading, onCoursesChange, onMessage, onLoadingChange 
 
   return (
     <div>
+      {/* Success/Error Messages */}
+      {success && (
+        <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded flex items-center">
+          <CheckCircle className="w-5 h-5 mr-2" />
+          {success}
+        </div>
+      )}
+      {error && (
+        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded flex items-center">
+          <AlertCircle className="w-5 h-5 mr-2" />
+          {error}
+        </div>
+      )}
+
       <div className="mb-6 flex justify-between items-center">
         <h2 className="text-2xl font-semibold text-gray-900">Courses</h2>
         <button
@@ -152,13 +229,14 @@ const Course = ({ courses, loading, onCoursesChange, onMessage, onLoadingChange 
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => handleViewCourseDetails(course.courseId)}
+                          onClick={() => viewCourseDetails(course.courseId)}
                           className="text-blue-600 hover:text-blue-900"
+                          title="View details"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDeleteCourse(course.courseId)}
+                          onClick={() => deleteCourse(course.courseId)}
                           disabled={isPrerequisiteForOthers(course.courseId)}
                           className={`${
                             isPrerequisiteForOthers(course.courseId)
@@ -185,7 +263,7 @@ const Course = ({ courses, loading, onCoursesChange, onMessage, onLoadingChange 
 
       {/* Create Course Modal */}
       {showCourseForm && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <div className="flex justify-between items-center mb-4">
@@ -197,7 +275,7 @@ const Course = ({ courses, loading, onCoursesChange, onMessage, onLoadingChange 
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <form onSubmit={handleCreateCourse} className="space-y-4">
+              <form onSubmit={createCourse} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Course ID
@@ -242,18 +320,19 @@ const Course = ({ courses, loading, onCoursesChange, onMessage, onLoadingChange 
                     Prerequisites
                   </label>
                   <div className="max-h-32 overflow-y-auto border border-gray-300 rounded-md p-2">
-                    {courses.map((course) => (
-                      <label key={course.courseId} className="flex items-center mb-1">
-                        <input
-                          type="checkbox"
-                          checked={courseForm.prerequisites.includes(course.courseId)}
-                          onChange={() => handlePrerequisiteChange(course.courseId)}
-                          className="mr-2"
-                        />
-                        <span className="text-sm">{course.courseId} - {course.title}</span>
-                      </label>
-                    ))}
-                    {courses.length === 0 && (
+                    {courses.length > 0 ? (
+                      courses.map((course) => (
+                        <label key={course.courseId} className="flex items-center mb-1">
+                          <input
+                            type="checkbox"
+                            checked={courseForm.prerequisites.includes(course.courseId)}
+                            onChange={() => handlePrerequisiteChange(course.courseId)}
+                            className="mr-2"
+                          />
+                          <span className="text-sm">{course.courseId} - {course.title}</span>
+                        </label>
+                      ))
+                    ) : (
                       <p className="text-sm text-gray-500">No courses available</p>
                     )}
                   </div>
@@ -282,7 +361,7 @@ const Course = ({ courses, loading, onCoursesChange, onMessage, onLoadingChange 
 
       {/* Course Details Modal */}
       {selectedCourse && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-2/3 max-w-2xl shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <div className="flex justify-between items-center mb-4">

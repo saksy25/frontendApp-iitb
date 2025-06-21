@@ -1,5 +1,5 @@
 import React from 'react';
-import CourseApp from './components/Instance';
+import CourseApp from './pages/CourseApp';
 
 function App() {
  

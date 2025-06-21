@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Eye, X } from 'lucide-react';
-import { courseAPI } from '../services/api';
+import { Plus, Trash2, Eye, Calendar, AlertCircle, CheckCircle, X } from 'lucide-react';
 
-const CourseInstances = () => {
+const API_BASE_URL = 'http://localhost:8080/api';
+
+const CourseInstance = () => {
   const [courses, setCourses] = useState([]);
   const [instances, setInstances] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -47,8 +48,13 @@ const CourseInstances = () => {
 
   const fetchCourses = async () => {
     try {
-      const data = await courseAPI.getCourses();
-      setCourses(data);
+      const response = await fetch(`${API_BASE_URL}/courses`);
+      if (response.ok) {
+        const data = await response.json();
+        setCourses(data);
+      } else {
+        throw new Error('Failed to fetch courses');
+      }
     } catch (err) {
       showMessage('Error fetching courses: ' + err.message, 'error');
     }
@@ -57,8 +63,21 @@ const CourseInstances = () => {
   const fetchInstances = async (year, semester) => {
     setLoading(true);
     try {
-      const data = await courseAPI.getInstances(year, semester);
-      setInstances(data);
+      const response = await fetch(`${API_BASE_URL}/instances/${year}/${semester}`);
+      if (response.ok) {
+        const data = await response.json();
+        // Transform the data to flatten the nested course structure
+        const transformedData = data.map(instance => ({
+          ...instance,
+          courseId: instance.course?.courseId || instance.courseId,
+          title: instance.course?.title || instance.title,
+          description: instance.course?.description || instance.description,
+          prerequisites: instance.course?.prerequisites || instance.prerequisites || []
+        }));
+        setInstances(transformedData);
+      } else {
+        throw new Error('Failed to fetch instances');
+      }
     } catch (err) {
       showMessage('Error fetching instances: ' + err.message, 'error');
     } finally {
@@ -70,11 +89,23 @@ const CourseInstances = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await courseAPI.createInstance(instanceForm);
-      showMessage('Course instance created successfully!');
-      setInstanceForm({ courseId: '', year: new Date().getFullYear(), semester: 1 });
-      setShowInstanceForm(false);
-      fetchInstances(instanceFilter.year, instanceFilter.semester);
+      const response = await fetch(`${API_BASE_URL}/instances`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(instanceForm),
+      });
+
+      if (response.ok) {
+        showMessage('Course instance created successfully!');
+        setInstanceForm({ courseId: '', year: new Date().getFullYear(), semester: 1 });
+        setShowInstanceForm(false);
+        fetchInstances(instanceFilter.year, instanceFilter.semester);
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create instance');
+      }
     } catch (err) {
       showMessage('Error creating instance: ' + err.message, 'error');
     } finally {
@@ -87,9 +118,33 @@ const CourseInstances = () => {
 
     setLoading(true);
     try {
-      await courseAPI.deleteInstance(year, semester, courseId);
-      showMessage('Course instance deleted successfully!');
-      fetchInstances(instanceFilter.year, instanceFilter.semester);
+      // Encode courseId to handle spaces and special characters
+      const encodedCourseId = encodeURIComponent(courseId);
+      const response = await fetch(`${API_BASE_URL}/instances/${year}/${semester}/${encodedCourseId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        showMessage('Course instance deleted successfully!');
+        fetchInstances(instanceFilter.year, instanceFilter.semester);
+        // Close details modal if the deleted instance is currently selected
+        if (selectedInstance && 
+            selectedInstance.courseId === courseId && 
+            selectedInstance.year === year && 
+            selectedInstance.semester === semester) {
+          setSelectedInstance(null);
+        }
+      } else {
+        const errorText = await response.text();
+        let errorMessage = 'Failed to delete instance';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
     } catch (err) {
       showMessage('Error deleting instance: ' + err.message, 'error');
     } finally {
@@ -100,8 +155,31 @@ const CourseInstances = () => {
   const viewInstanceDetails = async (year, semester, courseId) => {
     setLoading(true);
     try {
-      const data = await courseAPI.getInstanceDetails(year, semester, courseId);
-      setSelectedInstance(data);
+      // Encode courseId to handle spaces and special characters
+      const encodedCourseId = encodeURIComponent(courseId);
+      const response = await fetch(`${API_BASE_URL}/instances/${year}/${semester}/${encodedCourseId}`);
+      if (response.ok) {
+        const data = await response.json();
+        // Transform the nested course data to flat structure
+        const transformedData = {
+          ...data,
+          courseId: data.course?.courseId || data.courseId,
+          title: data.course?.title || data.title,
+          description: data.course?.description || data.description,
+          prerequisites: data.course?.prerequisites || data.prerequisites || []
+        };
+        setSelectedInstance(transformedData);
+      } else {
+        const errorText = await response.text();
+        let errorMessage = 'Failed to fetch instance details';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
     } catch (err) {
       showMessage('Error fetching instance details: ' + err.message, 'error');
     } finally {
@@ -114,23 +192,32 @@ const CourseInstances = () => {
     return course ? course.title : courseId;
   };
 
+  const getCourseById = (courseId) => {
+    return courses.find(c => c.courseId === courseId);
+  };
+
+  const handleFilterChange = (newFilter) => {
+    setInstanceFilter(newFilter);
+    fetchInstances(newFilter.year, newFilter.semester);
+  };
+
   return (
-    <div className="space-y-6">
+    <div>
       {/* Success/Error Messages */}
       {success && (
-        <div className="p-4 bg-green-100 border border-green-400 text-green-700 rounded flex items-center">
-          <span className="mr-2">✓</span>
+        <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded flex items-center">
+          <CheckCircle className="w-5 h-5 mr-2" />
           {success}
         </div>
       )}
       {error && (
-        <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded flex items-center">
-          <span className="mr-2">⚠</span>
+        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded flex items-center">
+          <AlertCircle className="w-5 h-5 mr-2" />
           {error}
         </div>
       )}
 
-      <div className="flex justify-between items-center">
+      <div className="mb-6 flex justify-between items-center">
         <h2 className="text-2xl font-semibold text-gray-900">Course Instances</h2>
         <button
           onClick={() => setShowInstanceForm(true)}
@@ -142,11 +229,13 @@ const CourseInstances = () => {
       </div>
 
       {/* Instance Filter */}
-      <div className="bg-white p-4 rounded-lg shadow flex items-center space-x-4">
+      <div className="mb-6 bg-white p-4 rounded-lg shadow flex items-center space-x-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
           <input
             type="number"
+            min="2020"
+            max="2030"
             value={instanceFilter.year}
             onChange={(e) => setInstanceFilter(prev => ({ ...prev, year: parseInt(e.target.value) }))}
             className="border border-gray-300 rounded-md px-3 py-1 text-sm"
@@ -164,8 +253,8 @@ const CourseInstances = () => {
           </select>
         </div>
         <button
-          onClick={() => fetchInstances(instanceFilter.year, instanceFilter.semester)}
-          className="bg-gray-600 text-white px-4 py-1 rounded-md hover:bg-gray-700 text-sm"
+          onClick={() => handleFilterChange(instanceFilter)}
+          className="bg-gray-600 text-white px-4 py-1 rounded-md hover:bg-gray-700 text-sm mt-6"
         >
           Filter
         </button>
@@ -210,12 +299,12 @@ const CourseInstances = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {instances.map((instance, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
+                  <tr key={`${instance.courseId}-${instance.year}-${instance.semester}`} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {instance.courseId}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {getCourseTitle(instance.courseId)}
+                      {instance.title || 'Course title not found'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {instance.year}
@@ -228,12 +317,14 @@ const CourseInstances = () => {
                         <button
                           onClick={() => viewInstanceDetails(instance.year, instance.semester, instance.courseId)}
                           className="text-blue-600 hover:text-blue-900"
+                          title="View details"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => deleteInstance(instance.year, instance.semester, instance.courseId)}
                           className="text-red-600 hover:text-red-900"
+                          title="Delete instance"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -351,7 +442,9 @@ const CourseInstances = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Course Title</label>
-                  <p className="mt-1 text-sm text-gray-900">{getCourseTitle(selectedInstance.courseId)}</p>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedInstance.title || 'Title not available'}
+                  </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Year</label>
@@ -365,6 +458,21 @@ const CourseInstances = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Description</label>
                     <p className="mt-1 text-sm text-gray-900">{selectedInstance.description}</p>
+                  </div>
+                )}
+                {selectedInstance.prerequisites && selectedInstance.prerequisites.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Prerequisites</label>
+                    <div className="mt-1 flex flex-wrap gap-2">
+                      {selectedInstance.prerequisites.map((prereq, index) => (
+                        <span
+                          key={`${prereq}-${index}`}
+                          className="inline-block bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full"
+                        >
+                          {prereq}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -384,4 +492,4 @@ const CourseInstances = () => {
   );
 };
 
-export default CourseInstances;
+export default CourseInstance;
