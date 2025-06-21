@@ -1,11 +1,11 @@
 import React from 'react';
-import List from './components/course/CourseDetails.jsx';
+import CourseApp from './components/Instance';
 
 function App() {
  
   return (
     <>
-      <List />
+      <CourseApp />
     </>
   )
 }
