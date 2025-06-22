@@ -168,7 +168,7 @@ const Course = () => {
 
       <div className="mb-6 flex justify-between px-4 items-center">
         <h2 className="text-2xl font-semibold text-blue-950">Courses</h2>
-        <div className="px-6 md:min-w-3xl">
+        <div className="px-6 w-3xl">
           <div className="relative">
             <input
               type="text"

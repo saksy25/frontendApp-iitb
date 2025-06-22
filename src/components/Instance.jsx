@@ -104,8 +104,11 @@ const CourseInstance = () => {
         fetchInstances(instanceFilter.year, instanceFilter.semester);
       } else {
         const errorData = await response.json();
+        if (response.status === 400 || response.status === 409) {
+          window.alert(`Course instance already exists for ${instanceForm.courseId} in ${instanceForm.year} semester ${instanceForm.semester}`, 'error');
+        }
         throw new Error(errorData.message || 'Failed to create instance');
-      }
+      } 
     } catch (err) {
       showMessage('Error creating instance: ' + err.message, 'error');
     } finally {
