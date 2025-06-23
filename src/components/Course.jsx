@@ -9,6 +9,7 @@ const Course = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [instances, setInstances] = useState([]);
 
   // Course form states
   const [showCourseForm, setShowCourseForm] = useState(false);
@@ -24,6 +25,7 @@ const Course = () => {
 
   useEffect(() => {
     fetchCourses();
+    fetchInstances();
   }, []);
 
   const showMessage = (message, type = 'success') => {
@@ -54,6 +56,27 @@ const Course = () => {
       showMessage('Error fetching courses: ' + err.message, 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchInstances = async () => {
+    try {
+      // Fetch all instances to check dependencies
+      const currentYear = new Date().getFullYear();
+      const response1 = await fetch(`${API_BASE_URL}/instances/${currentYear}/1`);
+      const response2 = await fetch(`${API_BASE_URL}/instances/${currentYear}/2`);
+      
+      const instances1 = response1.ok ? await response1.json() : [];
+      const instances2 = response2.ok ? await response2.json() : [];
+      
+      const allInstances = [...instances1, ...instances2].map(instance => ({
+        ...instance,
+        courseId: instance.course?.courseId || instance.courseId
+      }));
+      
+      setInstances(allInstances);
+    } catch (err) {
+      console.error('Error fetching instances:', err);
     }
   };
 
@@ -91,6 +114,10 @@ const Course = () => {
   };
 
   const deleteCourse = async (courseId) => {
+    if (courseHasInstances(courseId)) {
+      window.alert('Cannot delete course: it has active instances');
+      return;
+    }
     if (!window.confirm('Are you sure you want to delete this course?')) return;
 
     setLoading(true);
@@ -129,6 +156,12 @@ const Course = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const courseHasInstances = (courseId) => {
+  // This would need to be populated by fetching instances data
+  // For now, you'll need to add state to track instances
+    return instances.some(instance => instance.courseId === courseId);
   };
 
   const handlePrerequisiteChange = (courseId) => {
@@ -264,14 +297,16 @@ const Course = () => {
                         </button>
                         <button
                           onClick={() => deleteCourse(course.courseId)}
-                          disabled={isPrerequisiteForOthers(course.courseId)}
+                          disabled={isPrerequisiteForOthers(course.courseId) || courseHasInstances(course.courseId)}
                           className={`${
-                            isPrerequisiteForOthers(course.courseId)
+                            isPrerequisiteForOthers(course.courseId) || courseHasInstances(course.courseId)
                               ? 'text-gray-500 cursor-not-allowed'
                               : 'text-red-600 hover:text-red-900'
                           }`}
                           title={
-                            isPrerequisiteForOthers(course.courseId)
+                            courseHasInstances(course.courseId)
+                              ? 'Cannot delete: course has active instances'
+                              : isPrerequisiteForOthers(course.courseId)
                               ? 'Cannot delete: course is a prerequisite for other courses'
                               : 'Delete course'
                           }
