@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Eye, Book, AlertCircle, CheckCircle, X } from 'lucide-react';
+import { Plus, Trash2, Eye, AlertCircle, CheckCircle, X } from 'lucide-react';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
