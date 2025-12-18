@@ -5,9 +5,9 @@ A full-stack web application designed to manage course offerings and their deliv
 ## 📋 Table of Contents
 
 - [Project Overview](#-project-overview)
+- [Key Features](#-key-features)
 - [Architecture](#-architecture)
 - [Tech Stack](#-tech-stack)
-- [Key Features](#-key-features)
 - [Design Decisions](#-design-decisions)
 - [Database Design](#-database-design)
 - [API Endpoints](#-api-endpoints)
@@ -20,7 +20,7 @@ A full-stack web application designed to manage course offerings and their deliv
 
 The Course Management System is a full-stack application that enables efficient management of academic courses and their delivery instances. It supports complex prerequisite relationships and provides a user-friendly interface for course administration.
 
-### Key Features
+## Key Features
 
 - 📚 **Course Management** - Create, read, update, and delete courses with prerequisite handling
 - 🔄 **Prerequisite Relationships** - Manage complex course dependencies
@@ -34,7 +34,7 @@ The Course Management System is a full-stack application that enables efficient 
 
 ### System Architecture
 
-![image](https://github.com/saksy25/frontendApp-iitb/issues/1#issue-3743212509)
+<img width="899" height="318" alt="Image" src="https://github.com/user-attachments/assets/be318ceb-5fdf-40bb-96df-d7549049b1c3" />
 
 The application follows a three-tier architecture with clear separation of concerns:
 - **Presentation Layer**: React frontend with Tailwind CSS
@@ -90,7 +90,7 @@ The application follows a three-tier architecture with clear separation of conce
 
 ### Entity Relationship Diagram
 
-![image](https://github.com/saksy25/frontendApp-iitb/issues/2#issue-3743228839)
+<img width="1082" height="637" alt="Image" src="https://github.com/user-attachments/assets/badb5442-6ed7-4100-a79f-6a068dc85523" />
 
 ### Database Tables
 
